@@ -1,0 +1,19 @@
+!!!
+%html
+  %head
+    %meta{:content => "text/html; charset=UTF-8", "http-equiv" => "Content-Type"}/
+    %title Effigy
+    = csrf_meta_tags
+    = stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload'
+    = javascript_include_tag 'application', 'data-turbolinks-track': 'reload'
+  %body
+    %nav{class: 'navbar navbar-default'}
+      %div{class: 'container'}
+        %div{class: 'navbar-header'}
+          %a{class: 'navbar-brand', href: '#'} iCaption
+    %div{class: 'container'}
+      = yield
+    %hr
+    %div{class: 'footer'}
+      %div{class: 'container'}
+        Effigy 0.0.1
