@@ -9,7 +9,7 @@ var dynaloader = function() {
 	var bounce_time = 500;
 
 	var attach = function() {
-		pane = $('#pane');
+		pane = layout.get_pane();
 	}
 
 	var attach_zoom = function(val) {
@@ -20,6 +20,11 @@ var dynaloader = function() {
 				} else {
 					zoom('down');
 				}
+
+				if (!bounce_enabled) {
+					e.preventDefault();
+				}
+
 			})
 		} else {
 			pane.unbind('mousewheel');
@@ -43,12 +48,22 @@ var dynaloader = function() {
 		})
 
 		setup_zoom();
+		setup_seek();
 	}
 
 	var setup_zoom = function() {
 		srank = Object.keys(rank).map(function(x) { return parseInt(x); });
 		zoom_position = srank.length - 1;
 		attach_zoom(true);
+	}
+
+	var setup_seek = function() {
+		var video_player = layout.get_video_instance();
+		$('#pane').find('img').on('click', function() {
+			var t = parseFloat($(this).attr('time'));
+
+			video_player.currentTime = t;
+		});
 	}
 
 	var zoom = function(dir) {
@@ -76,13 +91,19 @@ var dynaloader = function() {
 			if (zoom_position < ulimit) {
 				bounce_enabled = false;
 				trigger('show', zoom_position++);
+
+				return true;
 			}
 		} else if (bounce_enabled && dir == 'down') {
 			if (zoom_position > 1) {
 				bounce_enabled = false;
 				trigger('hide', zoom_position--);
+
+				return true;
 			}
 		}
+
+		return false;
 	}
 
 	var spawn_image = function(v, key, data) {

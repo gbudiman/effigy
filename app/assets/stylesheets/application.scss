@@ -5,6 +5,16 @@ body {
   font-family: 'Exo 2', sans-serif;
 }
 
-.figmini {
-	max-width: 64px;
+img.figmini {
+	max-width: 96px;
+	cursor: pointer;
+}
+
+img.figmini:hover {
+	transform: scale(2);
+	transition: all 100ms ease-in;
+}
+
+#pane {
+	overflow-y: auto;
 }

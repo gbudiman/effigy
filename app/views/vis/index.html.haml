@@ -1,13 +1,23 @@
-%select{class: 'selectpicker', title: 'Select Demo Movie', id: 'video-selector'}
-	%option{value: 'pacific_rim'} Pacific Rim
-	/%option{value: 'orchestra'} Two Steps From Hell
+%div{class: 'col-xs-4'}
+	%div{class: 'row'}
+		%select{class: 'selectpicker', title: 'Select Demo Movie', id: 'video-selector'}
+			%option{value: 'pacific_rim', file: 'pacific_rim.mp4'} Pacific Rim
+			/%option{value: 'orchestra'} Two Steps From Hell
 
+%div{class: 'col-xs-8'}
+	%div{class: 'row'}
+		%video{id: 'video-player', controls: true, autoplay: true, preload: true, fluid: true}
+			/ %source{src:'/videos/pacific_rim.mp4'}
+
+%div{class: 'row'}
 %div{id: 'pane', style: 'margin-top: 8px'}
 
+= javascript_include_tag 'http://vjs.zencdn.net/6.2.8/video.js'
 = javascript_include_tag 'velocity.min'
 = javascript_include_tag 'bootstrap-select.min'
 = javascript_include_tag 'dynaloader'
 = javascript_include_tag 'layout'
+= stylesheet_link_tag 'http://vjs.zencdn.net/6.2.8/video-js.css'
 = stylesheet_link_tag 'bootstrap-select.min'
 
 :javascript
