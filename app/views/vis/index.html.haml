@@ -1,0 +1,13 @@
+%select{class: 'selectpicker', title: 'Select Demo Movie', id: 'video-selector'}
+	%option{value: 'pacific_rim'} Pacific Rim
+	/%option{value: 'orchestra'} Two Steps From Hell
+
+%div{id: 'pane', style: 'margin-top: 8px'}
+
+= javascript_include_tag 'bootstrap-select.min'
+= javascript_include_tag 'dynaloader'
+= javascript_include_tag 'layout'
+= stylesheet_link_tag 'bootstrap-select.min'
+
+:javascript
+	layout.attach()

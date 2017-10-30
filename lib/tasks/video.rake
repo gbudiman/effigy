@@ -3,6 +3,7 @@ require 'fileutils'
 namespace :video do
   desc "Extract I-frames from video"
   # Invoke: rake video:to_figs"[input.mp4, 90, 250]"
+  # Note no space after to_figs
   # _start_s and _length_s are optional, specified in seconds
   task :to_figs, [:input_video, :start_s, :length_s] => [:environment] do |task, args|
   	args.with_defaults(start_s: 0, length_s: 600)
