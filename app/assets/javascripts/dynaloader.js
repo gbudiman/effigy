@@ -4,6 +4,10 @@ var dynaloader = function() {
 	var srank;
 	var zoom_position;
 
+	// animation-related
+	var bounce_enabled;
+	var bounce_time = 500;
+
 	var attach = function() {
 		pane = $('#pane');
 	}
@@ -20,6 +24,8 @@ var dynaloader = function() {
 		} else {
 			pane.unbind('mousewheel');
 		}
+
+		bounce_enabled = val;
 	}
 
 	var load = function(v, d) {
@@ -51,22 +57,29 @@ var dynaloader = function() {
 			var rank_value = srank[pos];
 
 			if (act == 'show') {
-				$('img[rank=' + rank_value + ']').show();
+				$('img[rank=' + (rank_value + 1) + ']').show().css('opacity', 0).velocity({
+					opacity: 1
+				}, bounce_time, function() {
+					bounce_enabled = true;
+				})
 			} else if (act == 'hide') {
-				$('img[rank=' + rank_value + ']').hide();
+				$('img[rank=' + rank_value + ']').velocity({
+					opacity: 0
+				}, bounce_time, function() {
+					$(this).hide();
+					bounce_enabled = true;
+				})
 			}
 		}
 
-		console.log(dir + ' ' + zoom_position + '/' + ulimit);
-
-		if (dir == 'up') {
+		if (bounce_enabled && dir == 'up') {
 			if (zoom_position < ulimit) {
-				console.log(zoom_position + ' -> ' + (zoom_position + 1));
+				bounce_enabled = false;
 				trigger('show', zoom_position++);
 			}
-		} else if (dir == 'down') {
-			if (zoom_position > 0) {
-				console.log(zoom_position + ' -> ' + (zoom_position - 1));
+		} else if (bounce_enabled && dir == 'down') {
+			if (zoom_position > 1) {
+				bounce_enabled = false;
 				trigger('hide', zoom_position--);
 			}
 		}
