@@ -55,17 +55,17 @@ environment ENV.fetch("RAILS_ENV") { "development" }
 # Allow puma to be restarted by `rails restart` command.
 plugin :tmp_restart
 
-app_dir = File.expand_path("../..", __FILE__)
-shared_dir = "#{app_dir}/shared"
-rails_env = ENV['RAILS_ENV'] || 'development'
-environment rails_env
-bind "unix://#{shared_dir}/sockets/puma.sock"
-stdout_redirect "#{shared_dir}/log/puma.stdout.log", "#{shared_dir}/log/puma.stderr.log", true
+#app_dir = File.expand_path("../..", __FILE__)
+#shared_dir = "#{app_dir}/shared"
+#rails_env = ENV['RAILS_ENV'] || 'development'
+#environment rails_env
+#bind "unix://#{shared_dir}/sockets/puma.sock"
+#stdout_redirect "#{shared_dir}/log/puma.stdout.log", "#{shared_dir}/log/puma.stderr.log", true
 
 # Set master PID and state locations
-pidfile "#{shared_dir}/pids/puma.pid"
-state_path "#{shared_dir}/pids/puma.state"
-activate_control_app
+#pidfile "#{shared_dir}/pids/puma.pid"
+#state_path "#{shared_dir}/pids/puma.state"
+#activate_control_app
 
 on_worker_boot do
   require "active_record"

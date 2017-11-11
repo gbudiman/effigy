@@ -1,0 +1,20 @@
+%div{class: 'col-xs-12', style: 'margin-bottom: 4px'}
+	%div{class: 'row'}
+		%select{class: 'selectpicker', title: 'Select Demo Movie', id: 'video-selector'}
+			%option{value: 'apple', file: 'Apple.mp4'} Apple
+			%option{value: 'disney', file: 'Disney.avi'} Disney
+			%option{value: 'hussein_day1', file: 'Hussein_Day1_007.avi'} Hussein Day
+			%option{value: 'michael_day2', file: 'Michael_Day2_018.avi'} Michael Day
+			%option{value: 'usc_week', file: 'USCWeek.avi'} USC Week
+
+		%button{class: 'btn btn-primary', id: 'upload'} Upload
+		%span{id: 'upload-status'}
+
+%textarea{class: 'form-control', rows: 32, id: 'payload'}
+
+= javascript_include_tag 'uploader'
+= javascript_include_tag 'bootstrap-select.min'
+= stylesheet_link_tag 'bootstrap-select.min'
+
+:javascript
+	uploader.attach();

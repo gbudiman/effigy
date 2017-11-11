@@ -28,9 +28,16 @@ class Video < ApplicationRecord
 		meta = Rails.root.join('figs', video_title, 'meta.txt')
 		timestamp = Rails.root.join('figs', video_title, 'timestamp.txt')
 
-		ts = parse_time_info meta: meta, timestamp: timestamp
-		return generate_rank(ts: ts)
-		
+		ts = nil
+
+		begin
+			ts = parse_time_info meta: meta, timestamp: timestamp
+			return generate_rank(ts: ts)
+		rescue
+			return JSON.parse(
+							 File.read(
+							 	 Rails.root.join('figs', video_title, 'json.txt').to_s))
+		end
 	end
 
 	def self.generate_rank ts:

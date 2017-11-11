@@ -8,7 +8,6 @@ Rails.application.config.assets.version = '1.0'
 # Add Yarn node_modules folder to the asset load path.
 Rails.application.config.assets.paths << Rails.root.join('node_modules')
 Rails.application.config.assets.paths << Rails.root.join('figs')
-Rails.application.config.assets.paths << Rails.root.join('vids')
 
 # Precompile additional assets.
 # application.js, application.css, and all non-JS/CSS in the app/assets
@@ -17,4 +16,6 @@ Rails.application.config.assets.precompile += %w( velocity.min.js
 																									bootstrap-select.min.css
 																									bootstrap-select.min.js
 																									layout.js
-																									dynaloader.js )
+																									dynaloader.js
+																									inspector.js
+																									uploader.js )

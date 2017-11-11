@@ -35,6 +35,7 @@ var layout = function() {
 					video_title: video_title
 				}
 			}).done(function(res) {
+				
 				if (res.success) {
 					dynaloader.load(video_title, res.result);
 					layout_pane();
