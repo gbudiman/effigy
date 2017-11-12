@@ -1,4 +1,18 @@
 class Video < ApplicationRecord
+	def self.mux_av video:, audio:, out:
+		video_file = Rails.root.join('public', 'videos', video)
+		audio_file = Rails.root.join('public', 'videos', audio)
+		out_file = Rails.root.join('public', 'videos', out)
+
+		syscmd = ["ffmpeg",
+							"-i #{video_file}",
+							"-i #{audio_file}",
+							'-c:v libx265 -c:a mp3',
+							out_file].join(' ')
+
+		ap syscmd
+		system(syscmd)
+	end
 	def self.generate_figs input_video:, start: 0, length: 600
 		video_name = File.basename input_video
 		output_folder = Rails.root.join('figs',
@@ -8,13 +22,13 @@ class Video < ApplicationRecord
 		FileUtils.mkdir output_folder
 
   	syscmd = ["ffmpeg",
-					  "-ss #{start}",
-						"-i #{input_video}",
-						"-t #{length}",
-						'-vf select="eq(pict_type\,I),showinfo"',
-						'-vsync', 
-						"vfr \"#{output_folder}/fig%08d.jpg\"",
-						"2> #{output_folder}/meta.txt"
+						  "-ss #{start}",
+							"-i #{input_video}",
+							"-t #{length}",
+							'-vf select="eq(pict_type\,I),showinfo"',
+							'-vsync', 
+							"vfr \"#{output_folder}/fig%08d.jpg\"",
+							"2> #{output_folder}/meta.txt"
 					].join(' ')
 
 		ap syscmd
