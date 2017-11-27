@@ -1,4 +1,32 @@
 class Video < ApplicationRecord
+	def self.generate_similarity input_folder:, compare: nil
+		if compare
+			s1 = Rails.root.join('figs', input_folder, sprintf("fig%08d.jpg", compare[0]))
+			s2 = Rails.root.join('figs', input_folder, sprintf("fig%08d.jpg", compare[1]))
+
+			img1 = Phashion::Image.new(s1.to_s)
+			img2 = Phashion::Image.new(s2.to_s)
+			ap(img2.distance_from(img1))
+
+		else
+			figs = Dir[Rails.root.join('figs', input_folder, '*.jpg')].sort
+			outpath = Rails.root.join('figs', input_folder, 'sims.txt')
+
+			sims = { File.basename(figs[0]) => 80 }
+
+			(1..figs.length-1).tqdm.each do |i|
+				img1 = Phashion::Image.new(figs[i-1])
+				img2 = Phashion::Image.new(figs[i])
+				sims[File.basename(figs[i])] = img2.distance_from(img1)
+			end
+
+			File.open(outpath.to_s, 'w') do |file|
+				file.write(sims.to_json)
+			end
+		end
+		return true
+	end
+
 	def self.mux_av video:, audio:, out:
 		video_file = Rails.root.join('public', 'videos', video)
 		audio_file = Rails.root.join('public', 'videos', audio)
@@ -13,6 +41,7 @@ class Video < ApplicationRecord
 		ap syscmd
 		system(syscmd)
 	end
+
 	def self.generate_figs input_video:, start: 0, length: 600
 		video_name = File.basename input_video
 		output_folder = Rails.root.join('figs',

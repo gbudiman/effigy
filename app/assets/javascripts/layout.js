@@ -50,8 +50,8 @@ var layout = function() {
 	}
 
 	var layout_pane = function() {
-		var height = $(window).height() * 0.3;
-		pane.css('max-height', height + 'px');
+		//var height = $(window).height() * 0.3;
+		//pane.css('max-height', height + 'px');
 	}
 
 

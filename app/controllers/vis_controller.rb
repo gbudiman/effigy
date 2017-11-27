@@ -3,7 +3,7 @@ class VisController < ApplicationController
 		video_title = request[:video_title]
 		render json: {
 			success: true,
-			result: Video.generate_metadata(video_title: video_title)
+			result: JSON.parse(IO.read(Rails.root.join('figs', video_title, 'ranked_keyframes.json')))
 		}
 	end
 end
