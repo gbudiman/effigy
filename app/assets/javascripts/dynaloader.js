@@ -469,7 +469,7 @@ var dynaloader = function() {
 				//console.log(zoom_position);
 				//console.log(last_mouseover_y);
 				var frame_index = frame_map[zoom_position][last_mouseover_y][last_mouseover_x];
-				var timestamp = parseInt(parseFloat(frame_index) / 20);
+				var timestamp = parseFloat(frame_index) / 20;
 				video_player.currentTime = timestamp;
 				console.log('Z = ' + zoom_position + ' | XY = (' + last_mouseover_x + ', ' + last_mouseover_y + ') => ' + frame_index);
 			}
