@@ -18,9 +18,11 @@ img.figmini:hover {
 #pane {
 	overflow-x: scroll;
 	overflow-y: hidden;
-	padding: 32px;
-	max-height: 160px;
+	//padding: 8px 32px;
+	//max-height: 224px;
 	white-space: nowrap;
+	//background-color: black;
+	cursor: pointer;
 }
 
 .row-indoor {

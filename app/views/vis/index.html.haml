@@ -1,20 +1,24 @@
 %div{class: 'col-xs-4'}
-	%div{class: 'row'}
-		%select{class: 'selectpicker', title: 'Select Demo Movie', id: 'video-selector'}
-			/ %option{value: 'pacific_rim', file: 'pacific_rim.mp4'} Pacific Rim
-			%option{value: 'apple', file: 'Apple.mp4'} Apple
-			%option{value: 'disney', file: 'Disney.avi'} Disney
-			%option{value: 'hussein_day1', file: 'Hussein_Day1_007.avi'} Hussein Day
-			%option{value: 'michael_day2', file: 'Michael_Day2_018.avi'} Michael Day
-			%option{value: 'usc_week', file: 'USCWeek.avi'} USC Week
+	%select{class: 'selectpicker', title: 'Select Demo Movie', id: 'video-selector'}
+		/ %option{value: 'pacific_rim', file: 'pacific_rim.mp4'} Pacific Rim
+		%option{value: 'apple', file: 'Apple.mp4'} Apple
+		%option{value: 'disney', file: 'Disney.mp4'} Disney
+		%option{value: 'hussein_day1', file: 'Hussein_Day1_007.mp4'} Hussein Day
+		%option{value: 'michael_day2', file: 'Michael_Day2_018.mp4'} Michael Day
+		%option{value: 'usc_week', file: 'USCWeek.mp4'} USC Week
+
+	%div{class: 'well well-sm', style: 'margin-top: 8px; display: none', id: 'zoom-container'}
+		Zoom Level
+		%span{id: 'zoom-level'} N/A
+
+	%div{class: 'well well-sm', style: 'display: none', id: 'frame-map-loader-message'}
 
 %div{class: 'col-xs-8'}
 	%div{class: 'row'}
 		%video{id: 'video-player', controls: true, autoplay: true, preload: true, fluid: true}
-			/ %source{src:'/videos/pacific_rim.mp4'}
 
 %div{class: 'row'}
-%div{id: 'pane', style: 'margin-top: 8px'}
+%div{id: 'pane', style: 'margin-top: 8px; display: none'}
 
 = javascript_include_tag 'http://vjs.zencdn.net/6.2.8/video.js'
 = javascript_include_tag 'velocity.min'
@@ -22,6 +26,8 @@
 = javascript_include_tag 'dynaloader'
 = javascript_include_tag 'layout'
 = javascript_include_tag 'inspector'
+= javascript_include_tag 'jszip-utils.min'
+= javascript_include_tag 'jszip.min'
 = stylesheet_link_tag 'http://vjs.zencdn.net/6.2.8/video-js.css'
 = stylesheet_link_tag 'bootstrap-select.min'
 

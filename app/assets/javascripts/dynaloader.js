@@ -7,6 +7,22 @@ var dynaloader = function() {
 	var cumulative_figs_count;
 	var ordered_position;
 	var current_mouseover;
+	var zoom_container;
+	var zoom_level_text;
+	var overlap_data;
+	var frame_map;
+	var frame_map_loaded;
+	var frame_map_ready;
+	var global_mouseover_x;
+	var last_mouseover_x;
+	var last_mouseover_y;
+	var video_player;
+	var fixed_tapestry_height;
+	var dict_width;
+	var video_name;
+	var frame_map_loader_message;
+	var idx_top;
+	var idx_bottom;
 
 	// animation-related
 	var bounce_enabled;
@@ -14,6 +30,9 @@ var dynaloader = function() {
 
 	var attach = function() {
 		pane = layout.get_pane();
+		zoom_level_text = $('#zoom-level');
+		zoom_container = $('#zoom-container');
+		frame_map_loader_message = $('#frame-map-loader-message');
 	}
 
 	var attach_zoom = function(val) {
@@ -37,45 +56,202 @@ var dynaloader = function() {
 		bounce_enabled = val;
 	}
 
+	var set_zoom_text = function() {
+		zoom_level_text.text(zoom_position);
+	}
+
 	var strip_extension = function(s) {
 		return s.replace(/\.\w+$/, '');
 	}
 
-	var load = function(v, d) {
-		pane.empty();
+	var set_frame_loader_message = function(val) {
+		if (!val) {
+			frame_map_loader_message.text('').hide()
+		} else {
+			frame_map_loader_message.text('Loading Frame Map data...').show();
+		}
+	}
+
+	var populate_dict_width = function() {
+		dict_width = [];
+		for (var i = 0; i < max_rank; i++) {
+			dict_width.push($('img[data-tapestry=' + i + ']').css('width'));
+			if (i == 0) {
+				fixed_tapestry_height = $('img[data-tapestry=' + i + ']').css('height');
+			}
+		}
+
+		console.log(dict_width);
+	}
+
+	var load = function(v) {
+		video_name = v;
 		attach_zoom(false);
-		rank = {};
-		cumulative_figs_count = {};
-		ordered_position = new Array();
-		
-		$.each(d, function(key, data) {
-			if (!(data.r in rank)) {
-				rank[data.r] = 0;
-			}
-
-			rank[data.r]++;
-			spawn_image(v, key, data);
-			if (cumulative_figs_count[data.r] == undefined) {
-				cumulative_figs_count[data.r] = 0;
-			}
-
-			ordered_position.push({ rank: data.r, frame: strip_extension(key) });
-			cumulative_figs_count[data.r]++;
-		})
-
-		figs_count_key = Object.keys(cumulative_figs_count).sort();
-		$.each(figs_count_key, function(i, x) {
-			position = parseInt(x);
-			previous_amount = (cumulative_figs_count[position - 1] || 0);
-
-			cumulative_figs_count[position] += previous_amount;
-		})
-
-		setup_caret();
 		setup_zoom();
 		setup_seek();
-		toggle_figs();
-		layout_pane();
+		pane.empty().show();
+		spawn_images();
+		setTimeout(function() {
+			populate_dict_width();
+		}, 250);
+		
+		zoom_container.show();
+		$('[data-tapestry=0]').show();
+		load_frame_map();
+		// pane.show();
+		// pane.empty();
+		// attach_zoom(false);
+		// rank = {};
+		// overlap_data = {};
+		// cumulative_figs_count = {};
+		// ordered_position = new Array();
+		
+		// $.each(d, function(key, data) {
+		// 	var png_key = key.replace('jpg', 'png');
+		// 	overlap_data[key] = m[png_key];
+		// 	if (!(data.r in rank)) {
+		// 		rank[data.r] = 0;
+		// 	}
+
+		// 	rank[data.r]++;
+		// 	spawn_image(v, key, data);
+		// 	if (cumulative_figs_count[data.r] == undefined) {
+		// 		cumulative_figs_count[data.r] = 0;
+		// 	}
+
+		// 	ordered_position.push({ rank: data.r, frame: strip_extension(key) });
+		// 	cumulative_figs_count[data.r]++;
+		// })
+
+		// figs_count_key = Object.keys(cumulative_figs_count).sort();
+		// $.each(figs_count_key, function(i, x) {
+		// 	position = parseInt(x);
+		// 	previous_amount = (cumulative_figs_count[position - 1] || 0);
+
+		// 	cumulative_figs_count[position] += previous_amount;
+		// })
+
+		// set_figmini_margin();
+		// setup_caret();
+		// setup_zoom();
+		// setup_seek();
+		// toggle_figs();
+		// layout_pane();
+	}
+
+	var load_frame_map = function() {
+		var v = video_name;
+		var frame_map_regex = /frame_map_(\d+).csv/;
+		frame_map = new Array([], [], [], []);
+		idx_bottom = { 0: {}, 1: {}, 2: {}, 3: {} };
+		idx_top = { 0: {}, 1: {}, 2: {}, 3: {} };
+		frame_map_loaded = 0;
+		frame_map_ready = false;
+
+		var parse_raw_csv = function(z, level_index) {
+			var data = new Array();
+			var rows = z.split('\n');
+
+			$.each(rows, function(row_index, row_data) {
+				var row = new Array();
+				$.each(row_data.split(','), function(col_index, _data) {
+					var data = parseInt(_data);
+					if (row_index == 0) {
+						if (idx_top[level_index][data] == undefined) {
+							idx_top[level_index][data] = col_index;
+						}
+					}
+
+					if (row_index == rows.length - 2) {
+						if (idx_bottom[level_index][data] == undefined) {
+							idx_bottom[level_index][data] = col_index;
+						}
+					}
+
+					row.push(data);
+				})
+				data.push(row);
+			});
+
+			return data;
+		}
+
+		set_frame_loader_message(true);
+
+		new JSZip.external.Promise(function (resolve, reject) {
+			JSZipUtils.getBinaryContent('/assets/' + v + '/tapestry/frame_map.zip', function(err, data) {
+				if (err) { reject(err); }
+				else { resolve(data); }
+			})
+		}).then(function(data) {
+			return new Promise(function(resolve, reject) {
+				var zip = new JSZip();
+
+				zip.loadAsync(data).then(function(contents) {
+					$.each(contents.files, function(filename) {
+						var match = frame_map_regex.exec(filename);
+						var level_index = parseInt(match[1]);
+						zip.file(filename).async('text').then(function(content) {
+							//var a = content;
+							
+							frame_map[level_index] = parse_raw_csv(content, level_index);
+							frame_map_loaded++;
+
+							if (frame_map_loaded == 4) {
+								resolve(true);
+							}
+						})
+					})
+				})
+			})
+		}).then(function(data) {
+			frame_map_ready = true;
+			console.log(frame_map);
+			console.log(idx_top);
+			console.log(idx_bottom);
+			set_frame_loader_message(false);
+		});
+		// 	return JSZip.loadAsync(data);
+		// }).then(function(data) {
+		// 	console.log(data);
+		// 	console.log(data.files);
+		// 	//var zip = new JSZip();
+		// 	//zip.loadAsync(data);
+
+		// 	$.each(data.files, function(file_name, data) {
+		// 		console.log(file_name);
+		// 		data.file(file_name).async('string').then(function(content) {
+		// 			console.log(content);
+		// 		})
+		// 	})
+		// })
+	}
+
+	var set_figmini_margin = function() {
+		//console.log(overlap_data);
+		var index = 0;
+		var keys = Object.keys(overlap_data);
+
+		for (var k = 0; k < keys.length; k++) {
+			var key = keys[k];
+
+			//console.log(key);
+			if (k < keys.length - 1) {
+				var scaler = 96.0/352.0;
+				var next_key = keys[k + 1];
+				var next_id = '#' + next_key.replace('.jpg', '');
+				var next_left = overlap_data[next_key].l;
+				var curr_right = overlap_data[key].r;
+
+				if (curr_right < next_left) {
+					$(next_id).css('margin-left', (-1 * curr_right * scaler) + 'px');
+				} else {
+					$(next_id).css('margin-left', (-1 * next_left * scaler) + 'px');
+				}
+			}
+
+		}
+
 	}
 
 	var setup_caret = function() {
@@ -88,9 +264,7 @@ var dynaloader = function() {
 
 	var maintain_scroll = function() {
 		if (current_mouseover == null) return;
-		//console.log(ordered_position);
-		//console.log(current_mouseover);
-		//console.log('finding all frames at rank ' + zoom_position + ' or lower');
+
 		var caret_count = 0;
 		$.each(ordered_position, function(_junk, v) {
 			if (v.rank <= zoom_position) {
@@ -103,12 +277,8 @@ var dynaloader = function() {
 		});
 
 		var current_left = $('#' + current_mouseover).position().left;
-		var scrollpx = (caret_count - 1) * 96 + 61;
-		console.log('current_left = ' + current_left + ' scrollpx = ' + scrollpx);
-		//console.log(caret_count);
-		//console.log(scrollpx - current_left);
-		//pane.scrollLeft(scrollpx - current_left);
-		//$('#pane').scrollLeft(scrollpx - current_left);
+		var scrollpx = (caret_count - 1) * 96 + 77;
+
 		return scrollpx - current_left;
 	}
 
@@ -120,27 +290,21 @@ var dynaloader = function() {
 		}
 	}
 
-	var layout_pane = function() {
-		//console.log("zoom p = " + zoom_position);
-		//var items_count = cumulative_figs_count[zoom_position];
-		//pane.css('width', (96 * items_count + 64) + 'px');
-	}
-
 	var setup_zoom = function() {
-		srank = Object.keys(rank).map(function(x) { return parseInt(x); });
-		max_rank = srank.length - 1;
+		max_rank = 4;
 		zoom_position = 0;
+		set_zoom_text();
 		attach_zoom(true);
 	}
 
 	var setup_seek = function() {
-		var video_player = layout.get_video_instance();
-		$('#pane').find('img').on('click', function() {
-			var t = parseFloat($(this).attr('time'));
+		video_player = layout.get_video_instance();
+		// $('#pane').find('img').on('click', function() {
+		// 	var t = parseFloat($(this).attr('time'));
 
-			video_player.currentTime = t;
-			video_player.play();
-		});
+		// 	video_player.currentTime = t;
+		// 	video_player.play();
+		// });
 	}
 
 	var zoom = function(dir) {
@@ -149,12 +313,12 @@ var dynaloader = function() {
 			var rank_value = pos;
 			
 			if (act == 'show') {
-				layout_pane();
+				//layout_pane();
 				var scrollx = maintain_scroll();
-				var group = $('img[rank=' + (rank_value + 1) + ']');
+				var group = $('img[data-tapestry=' + (rank_value + 1) + ']');
 				group.show().css('opacity', 0)
 
-				pane.scrollLeft(scrollx);
+				//pane.scrollLeft(scrollx);
 				group.velocity({
 					opacity: 1
 				}, bounce_time, function() {
@@ -164,50 +328,156 @@ var dynaloader = function() {
 			} else if (act == 'hide') {
 				var scrollx = maintain_scroll();
 
-				$('img[rank=' + rank_value + ']').velocity({
+				$('img[data-tapestry=' + rank_value + ']').velocity({
 					opacity: 0
 				}, bounce_time, function() {
 					$(this).hide();
 					bounce_enabled = true;
-					layout_pane();
-					pane.scrollLeft(scrollx);
+					//layout_pane();
+					//pane.scrollLeft(scrollx);
 				})
 			}
 		}
 
-		if (bounce_enabled && dir == 'up') {
-			if (zoom_position < ulimit) {
-				bounce_enabled = false;
-				trigger('show', zoom_position++);
+		var trigger_tapestry = function(direction) {
+			
 
-				return true;
+			if (direction == 'up' && zoom_position < max_rank - 1) {
+				swap(direction);
+				zoom_position++;
+			} else if (direction == 'down' && zoom_position > 0) {
+				swap(direction);
+				zoom_position--;
 			}
-		} else if (bounce_enabled && dir == 'down') {
-			if (zoom_position > 0) {
-				bounce_enabled = false;
-				trigger('hide', zoom_position--);
 
-				return true;
-			}
+			set_zoom_text();
 		}
+
+		var swap = function(direction) {
+			bounce_enabled = false;
+			var before = zoom_position;
+			var after = before;
+
+			if (direction == 'up') { after++; }
+			else { after--; }
+
+			var post_width = $('img[data-tapestry=' + after + ']').css('width');
+
+			pane.css('background-image', 'url("/assets/' + video_name + '/tapestry/combined_image_new_' + after + '.jpg")');
+			var lock_x = last_mouseover_x;
+			var lock_y = last_mouseover_y;
+			var previous_figure = get_frame_at_cursor_position(before, lock_x, lock_y);
+			var previous_width = parseFloat(dict_width[before]);
+			var next_width = parseFloat(dict_width[after]);
+			var scale = next_width / previous_width;
+			var after_x = lock_x * scale;
+
+			var prev_pixel = idx_top[before][previous_figure] || idx_bottom[before][previous_figure];
+			var next_pixel = idx_top[after][previous_figure] || idx_bottom[after][previous_figure];
+			
+			var parent_offset = global_mouseover_x - $('#pane').parent().offset().left;
+			var frame_offset = lock_x - prev_pixel;
+			var diff = next_pixel - parent_offset + frame_offset;
+
+
+			//console.log(previous_figure);
+			//console.log(global_mouseover_x);
+			console.log(parent_offset);
+			console.log(prev_pixel + ' -> ' + next_pixel + ' | lock_x = ' + lock_x);
+			console.log(diff);
+
+			$('img[data-tapestry=' + before + ']').velocity({
+				width: dict_width[after],
+				height: fixed_tapestry_height,
+				opacity: 0
+			}, 1000, function() {
+				//console.log(before + ' -> ' + after + ' -> ' + dict_width[after]);
+				$(this).hide();
+				$('img[data-tapestry=' + after + ']')
+					.css('width', dict_width[after])
+					.css('height', fixed_tapestry_height)
+					.css('opacity', 1)
+					.show();
+
+				pane.css('background-image', '');
+
+				bounce_enabled = true;
+				if (!isNaN(diff)) {
+					pane.animate({scrollLeft: diff}, 250);
+					//pane.scrollLeft(diff);
+				} else {
+					console.log('lock_x = ' + lock_x + ' scale = ' + scale);
+					pane.animate({scrollleft: lock_x * scale}, 250);
+				}
+			})
+			// $('img[data-tapestry]').hide();
+			// $('img[data-tapestry=' + zoom_position + ']').show();
+		}
+
+		if (bounce_enabled) {
+			trigger_tapestry(dir);
+		}
+
+		// if (bounce_enabled && dir == 'up') {
+		// 	if (zoom_position < ulimit) {
+		// 		bounce_enabled = false;
+		// 		//trigger('show', zoom_position++);
+		// 		set_zoom_text();
+		// 		return true;
+		// 	}
+		// } else if (bounce_enabled && dir == 'down') {
+		// 	if (zoom_position > 0) {
+		// 		bounce_enabled = false;
+		// 		//trigger('hide', zoom_position--);
+		// 		set_zoom_text();
+		// 		return true;
+		// 	}
+		// }
 
 		return false;
 	}
 
-	var spawn_image = function(v, key, data) {
-		var pad = function(_x) {
-			var x = _x + 1;
-			var length = 8 - String(x).length;
+	var spawn_images = function() {
+		var v = video_name;
+		// var pad = function(_x) {
+		// 	var x = _x + 1;
+		// 	var length = 8 - String(x).length;
 
-			return '0'.repeat(length) + String(x);
+		// 	return '0'.repeat(length) + String(x);
+		// }
+
+		for (var i = 0; i < 4; i++) {
+			pane.append('<img src="assets/' + v + '/tapestry/combined_image_new_' + i + '.jpg"'
+								+     ' data-tapestry=' + i
+								+     ' style="display:none"'
+								+ ' />')
 		}
 
-		pane.append('<img src="assets/' + v + '/' + key + '"'
-							+     ' rank=' + data.r
-							+     ' time=' + data.t
-							+     ' id=' + strip_extension(key)
-							+     ' class=figmini'
-							+ ' />')
+		attach_mousemove();
+	}
+
+	var attach_mousemove = function() {
+		$('img[data-tapestry]').on('mousemove', function(event) {
+			var parent_offset = $(this).offset();
+			last_mouseover_x = parseInt(event.pageX - parent_offset.left);
+			last_mouseover_y = parseInt(event.pageY - parent_offset.top);
+			global_mouseover_x = parseInt(event.pageX);
+			//console.log('X=' + loc_x + 'Y=' + loc_y);
+
+		}).on('click', function() {
+			if (frame_map_ready) {
+				//console.log(zoom_position);
+				//console.log(last_mouseover_y);
+				var frame_index = frame_map[zoom_position][last_mouseover_y][last_mouseover_x];
+				var timestamp = parseInt(parseFloat(frame_index) / 20);
+				video_player.currentTime = timestamp;
+				console.log('Z = ' + zoom_position + ' | XY = (' + last_mouseover_x + ', ' + last_mouseover_y + ') => ' + frame_index);
+			}
+		})
+	}
+
+	var get_frame_at_cursor_position = function(pos, x, y) {
+		return frame_map[pos][y][x];
 	}
 
 	return {

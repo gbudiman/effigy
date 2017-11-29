@@ -35,11 +35,21 @@ class Video < ApplicationRecord
 		syscmd = ["ffmpeg",
 							"-i #{video_file}",
 							"-i #{audio_file}",
-							'-c:v libx265 -c:a mp3',
+							'-c:v libx264 -c:a mp3',
 							out_file].join(' ')
 
 		ap syscmd
 		system(syscmd)
+	end
+
+	def self.demo_mux_av
+		#['Apple', 'Disney', 'Hussein_Day1_007', 'Michael_Day2_018', 'USCWeek'].each do |v|
+		['Michael_Day2_018'].each do |v|
+			base_path = Rails.root.join('public', 'videos', v).to_s
+			Video.mux_av video: base_path + '.avi',
+									 audio: base_path + '.wav',
+									 out: base_path + '.mp4'
+		end
 	end
 
 	def self.generate_figs input_video:, start: 0, length: 600

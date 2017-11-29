@@ -11,7 +11,6 @@ var layout = function() {
 			layout_pane();
 		})
 		layout_video_window();
-		layout_pane();
 	}
 
 	var attach_video_selector = function() {
@@ -21,26 +20,32 @@ var layout = function() {
 		dynaloader.attach();
 
 		video_selector.on('changed.bs.select', function() {
-			var video_title = video_selector.selectpicker('val');
-			var video_file = video_selector.find('option:selected').attr('file');
+			setTimeout(function() {
+				console.log('change called');
+				var video_title = video_selector.selectpicker('val');
+				var video_file = video_selector.find('option:selected').attr('file');
+				var vanilla_video = video_player[0];
 
-			video_player.empty().append('<source src="/videos/' + video_file + '">');
-			layout_video_window();
-			
+				console.log(video_title);
 
-			$.ajax({
-				method: 'GET',
-				url: 'get_meta',
-				data: {
-					video_title: video_title
-				}
-			}).done(function(res) {
-				
-				if (res.success) {
-					dynaloader.load(video_title, res.result);
-					layout_pane();
-				}
-			})
+				video_player.empty().append('<source src="/videos/' + video_file + '">');
+				vanilla_video.load();
+				vanilla_video.play();
+				layout_video_window();
+
+				$.ajax({
+					method: 'GET',
+					url: 'get_meta',
+					data: {
+						video_title: video_title
+					}
+				}).done(function(res) {
+					
+					if (res.success) {
+						dynaloader.load(video_title);
+					}
+				})
+			}, 250);
 		})
 	}
 
@@ -48,12 +53,6 @@ var layout = function() {
 		var width = video_player.parent().parent().width();
 		video_player.css('max-width', width + 'px');
 	}
-
-	var layout_pane = function() {
-		//var height = $(window).height() * 0.3;
-		//pane.css('max-height', height + 'px');
-	}
-
 
 	return {
 		attach: attach,

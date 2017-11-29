@@ -19,4 +19,6 @@ Rails.application.config.assets.precompile += %w( velocity.min.js
 																									dynaloader.js
 																									inspector.js
 																									uploader.js
-																									iframe.js )
+																									iframe.js
+																									jszip.min.js
+																									jszip-utils.min.js )
