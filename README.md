@@ -14,7 +14,7 @@ Given a raw video file without any information of Intra-Frames (I-Frames), we ap
 #### Keyframes Extraction
 Keyframes are similar to I-Frames. They are the initial frames in a scene that is selected in such a way that the remaining frames in a particual scene can be encoded more efficiently with less entropy. Following this definition, a scene consists of this initial frame (keyframe) and the remaining frames for that scene. Our goal in this step is to extract these keyframes. Unlike video encoders which must maintain strict temporal relationship between keyframes and compressed frames (either P- or B- frames), our keyframes extraction does not have this constraint.
 
-Our experience in computer vision lead us to not work at pixel-level directly. We instead opted to use feature-space output of VGG19 neural network trained on ImageNet dataset. All frames are thus feed-forwarded to the VGG19 network. We then store the output from the last max-pooling layer in-memory for further processing. See [VGG19 Feature Extractor](https://github.com/coreylynch/vgg-19-feature-extractor) for visual examples of these features in action.
+Our experience in computer vision lead us to not work at pixel-level directly. We instead opted to use feature-space output of VGG19 neural network trained on ImageNet dataset. All frames are thus feed-forwarded to the VGG19 network. We then store the output from the last max-pooling layer in-memory for further processing. See [VGG19 Feature Extractor](https://github.com/coreylynch/vgg-19-feature-extractor)[1] for visual examples of these features in action.
 
 ![VGG19](https://www.cs.toronto.edu/~frossard/post/vgg16/vgg16.png)
 
@@ -50,13 +50,13 @@ Unlike video encoders that must maintain temporal constraints between I-Frames, 
 
 ![Step4](https://github.com/gbudiman/effigy/blob/master/public/docs_step4.png)
 
-#### Keyframe Importance Ranking
+#### Keyframes Importance Ranking
 
-The keyframes extracted are then arranged hierarchically based on their importance. We selected 4-level of importance. Rank-0 are the few, most important frames. We trained a shallow 3-layers neural network with supervised training method. The features are temporal relationships, [COCO](http://cocodataset.org) object detection, and average HSL values. We provided ground truth keyframes labeled with importance rank and we let the network to derive the weights and biases to each features.
+The keyframes extracted are then arranged hierarchically based on their importance. We selected 4-level of importance. Rank-0 are the few, most important frames. We trained a shallow 3-layers neural network with supervised training method. The features are temporal relationships, [COCO](http://cocodataset.org)[2] object detection, and average HSL values. We provided ground truth keyframes labeled with importance rank and we let the network to derive the weights and biases to each features.
 
 **Temporal relationships** is 1-by-24 matrix that contains the Cosine Distance of a particular keyframe to 12 keyframes preceding and 12 keyframes succeeding it. The network will learn the importance weight based on the similarity of keyframes. For example, similar keyframes that appear successively will have lower importance. This phenomena is common in handheld or head-mounted camera, where involuntary camera movement may create unnecessary scene changes.
 
-**COCO object detection** provides information of 80-classes object recognition. Hence, the size is 1-by-80 matrix. We use [YOLO](https://github.com/pjreddie/darknet) to extract objects and their bounding boxes. Based on the bounding boxes, we can derive the area of each object relative to the frame size. If there are multiple objects of a particular class, we simply take the largest bounding boxes. These area information are then multiplied with the highest detection confidence to populate the 1-by-80 matrix. This maximizing process is used instead of accumulation so that a single object, occupying large portion of the screen, generates higher importance compared to many, smaller objects.
+**COCO object detection** provides information of 80-classes object recognition. Hence, the size is 1-by-80 matrix. We use [YOLO](https://github.com/pjreddie/darknet)[3] to extract objects and their bounding boxes. Based on the bounding boxes, we can derive the area of each object relative to the frame size. If there are multiple objects of a particular class, we simply take the largest bounding boxes. These area information are then multiplied with the highest detection confidence to populate the 1-by-80 matrix. This maximizing process is used instead of accumulation so that a single object, occupying large portion of the screen, generates higher importance compared to many, smaller objects.
 
 **Average HSL values** are used based on observation that human are more attracted towards a certain hue (e.g. natural skin color, wooden, warm-lit environment). Luminance within a certain range, as well as saturation, may also play important role. This is a 1-by-3 matrix that the network needs to figure out the weight based on the provided ground truth.
 
@@ -70,4 +70,11 @@ The equation can then be simplified as **X** * **W** = **Y**, where
 
 We ran the training for 100,000 epochs, resulting 96% accuracy in trainset and 64% in testset at 10% train-test-split. This is a clear indication of overfitting. This may have been caused by insufficient training data as we only have 25 minutes of training video, which is then split 10% for testing.
 
+### Keyframes Blending
+
+??? Melvin ???
+
 ### References
+1. VGG19 Feature Extractor [VGG19 Feature Extractor](https://github.com/coreylynch/vgg-19-feature-extractor)
+2. Common Object in Context [COCO](http://cocodataset.org)
+3. YOLO [YOLO](https://github.com/pjreddie/darknet)
