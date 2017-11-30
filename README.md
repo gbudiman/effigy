@@ -24,13 +24,29 @@ Frames produced by FOD are then marked as keyframes, which creates separation be
 
 ![Step1](https://github.com/gbudiman/effigy/blob/master/public/docs_step1.png)
 
+FOD may detect blank, dark scene as keyframes. We need to remove such frames. To do so, we convert all frames to HSL colorspace. We take the mean and standard deviation of Luminance from all frames and remove those with average Luminance two standard deviations below mean. **This is the only part of the algorithm that works at pixel-level**.
+
 FOD is a coarse method in determining scenes. It has advantage in speed due to its single-pass, non-windowing method in detecting scene change. The disadvantage is obvious, FOD may not recognize scene separation in gradual changes. To detect this, we have the **Second Pass Analysis (SPA)**.
 
 SPA analyzes each scene independently and performs cross-correlation of the frames inside that particular scene by their Cosine Distance. SPA then attempts to detect clustering by iteratively running Principal Component Analysis (PCA). SPA increases PCA's number of clusters until it can capture 80% of the variance in the scene. This number is derived empirically through experiments. Knowing the number of appropriate clusters allows us to subdivide the scene into smaller ones, effectively inserting new separating keyframes. If we have more than one clusters, FOD must have missed the scene change.
 
 A typical smooth scene with steady motion looks like the following
+
 ![Step2_Gradual](https://github.com/gbudiman/effigy/blob/master/public/docs_step2_gradual.png)
 
-A scene with alternating scenes looks like the following
+A scene with alternating scenes looks like the heatmap below. In this case, SPA detects that 2 clusters are needed to capture 80% variance in the scene.
+
 ![Step2_Alternating](https://github.com/gbudiman/effigy/blob/master/public/docs_step2_alternating.png)
+
+Thus, a new keyframe is inserted. For reference, the keyframes extracted from the video look like the figure below. It is obvious (to human) that there is a scene change, yet FOD missed it.
+
+![Step2_Alternating_Example](https://github.com/gbudiman/effigy/blob/master/public/docs_step2_alternating_example.png)
+
+With the new keyframes, it is possible that we have generated similar keyframes resulting in overpopulation. A typical output from SPA looks like the following:
+
+![Step3](https://github.com/gbudiman/effigy/blob/master/public/docs_step3.png) 
+
+Unlike video encoders that must maintain temporal constraints between I-Frames, Keyframe Extraction do not need the non-distinct keyframes. We can discard similar keyframes by voting and statistical process. First, we cross-correlate the Cosine Distance from all keyframes at this point. Then we take the mean and standard deviation. Frames which have Cosine Distance two standard deviations below the mean are moved to the elimination pool. Then each remaining keyframes "vote" which of the frames in the elimination pool stay by selecting a frame with the highest Luminance value. This voting process is necessary because keyframes similarity has many-to-many relationship property. The final result of Keyframe Extraction is visualized in the heat map below.
+
+![Step4](https://github.com/gbudiman/effigy/blob/master/public/docs_step4.png)
 ### References
