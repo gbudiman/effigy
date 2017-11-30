@@ -1,6 +1,5 @@
 # Video Summarization using Statistics and Machine Learning
-### CSCI576 - Fall 2017 Project
-#### Gloria Budiman & Melvin Matthew
+### CSCI576 - Fall 2017 Project | Gloria Budiman & Melvin Matthew
 
 ### Abstract
 Video summarization is downsizing a video into a few related and important keyframes. Video, in essence, can be seen as a collection of frames, temporally related to one another. Seen this way, video summarization is a lossy compression of an input video, producing a few keyframes that viewers can skim rapidly to rapidly overview the video content.
