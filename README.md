@@ -68,7 +68,12 @@ The equation can then be simplified as **X** * **W** = **Y**, where
 
 - **Y** is a [1-by-4] importance rank, provided as labeled ground truth during training and generated during testing
 
-We ran the training for 100,000 epochs, resulting 96% accuracy in trainset and 64% in testset at 10% train-test-split. This is a clear indication of overfitting. This may have been caused by insufficient training data as we only have 25 minutes of training video, which is then split 10% for testing.
+The shallow network uses categorical crossentropy loss function. Metric used is accuracy. We believe this metric is not an optimal choice. We should penalize less if the importance difference is minimal (e.g. rank-2 identified as rank-3 or vice versa) and penalize heavily otherwise. We used Adam optimizer with very low learning rate at 0.01. The network consists of 3 layers:
+1. Fully-connected layer with 107 input neurons and 16 output neurons
+2. A simple dropout layer at 20% probability
+3. Fully-connected layer with 16 input neurons and 4 output neurons
+
+We ran the training for 100,000 epochs, resulting 96% accuracy in trainset and 64% in testset at 10% train-test split.  This is a clear indication of overfitting. This may have been caused by insufficient training data as we only have 25 minutes of training video, which is then split 10% for testing.
 
 ### Keyframes Blending
 
