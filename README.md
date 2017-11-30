@@ -20,5 +20,17 @@ Our experience in computer vision lead us to not work at pixel-level directly. W
 
 Now we have an array of Features in size of (T * W * H), where T is the number of frames in the video, W and H are width and height in pixels respectively. Our next goal is to identify scenes. We use a **First-Order Differentiator (FOD)**. FOD's task is to identify abrupt changes. This can be accomplished easily by linear single-pass scan throughout the Features, comparing two successive frames and recording their Cosine Difference. Abrupt changes in visual Feature is indicated by high value close to 1. We use a combination of adaptive algorithm and timeframe constraint to determine the threshold for FOD. This adaptive algorithm adjusts Cosine Distance threshold dynamically so that fast-paced scenes and slower, gradually changing ones can be detected equally accurately. We also impose a timeframe constraint that prevents scene creation below a certain number of frames in rapidly changing scenes. Consequently, the constraint also mandates scene separation when adaptive algorithm fails to detect new scene after a certain number of frames.
 
-Frames produced by FOD are then marked as keyframes, which creates separation between scenes. We then perform cross-correlation of these keyframes based on their
+Frames produced by FOD are then marked as keyframes, which creates separation between scenes. We then perform cross-correlation of these keyframes based on their Cosine Distance. A typical FOD result looks like the heat map below, with lighter colors indicate similar frames and darker colors indicate different frames.
+
+![Step1](https://github.com/gbudiman/effigy/blob/master/public/docs_step1.png)
+
+FOD is a coarse method in determining scenes. It has advantage in speed due to its single-pass, non-windowing method in detecting scene change. The disadvantage is obvious, FOD may not recognize scene separation in gradual changes. To detect this, we have the **Second Pass Analysis (SPA)**.
+
+SPA analyzes each scene independently and performs cross-correlation of the frames inside that particular scene by their Cosine Distance. SPA then attempts to detect clustering by iteratively running Principal Component Analysis (PCA). SPA increases PCA's number of clusters until it can capture 80% of the variance in the scene. This number is derived empirically through experiments. Knowing the number of appropriate clusters allows us to subdivide the scene into smaller ones, effectively inserting new separating keyframes. If we have more than one clusters, FOD must have missed the scene change.
+
+A typical smooth scene with steady motion looks like the following
+![Step2_Gradual](https://github.com/gbudiman/effigy/blob/master/public/docs_step2_gradual.png)
+
+A scene with alternating scenes looks like the following
+![Step2_Alternating](https://github.com/gbudiman/effigy/blob/master/public/docs_step2_alternating.png)
 ### References
