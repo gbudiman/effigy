@@ -49,4 +49,25 @@ With the new keyframes, it is possible that we have generated similar keyframes 
 Unlike video encoders that must maintain temporal constraints between I-Frames, Keyframe Extraction do not need the non-distinct keyframes. We can discard similar keyframes by voting and statistical process. First, we cross-correlate the Cosine Distance from all keyframes at this point. Then we take the mean and standard deviation. Frames which have Cosine Distance two standard deviations below the mean are moved to the elimination pool. Then each remaining keyframes "vote" which of the frames in the elimination pool stay by selecting a frame with the highest Luminance value. This voting process is necessary because keyframes similarity has many-to-many relationship property. The final result of Keyframe Extraction is visualized in the heat map below.
 
 ![Step4](https://github.com/gbudiman/effigy/blob/master/public/docs_step4.png)
+
+#### Keyframe Importance Ranking
+
+The keyframes extracted are then arranged hierarchically based on their importance. We selected 4-level of importance. Rank-0 are the few, most important frames. We trained a shallow 3-layers neural network with supervised training method. The features are temporal relationships, [COCO](http://cocodataset.org) object detection, and average HSL values. We provided ground truth keyframes labeled with importance rank and we let the network to derive the weights and biases to each features.
+
+**Temporal relationships** is 1-by-24 matrix that contains the Cosine Distance of a particular keyframe to 12 keyframes preceding and 12 keyframes succeeding it. The network will learn the importance weight based on the similarity of keyframes. For example, similar keyframes that appear successively will have lower importance. This phenomena is common in handheld or head-mounted camera, where involuntary camera movement may create unnecessary scene changes.
+
+**COCO object detection** provides information of 80-classes object recognition. Hence, the size is 1-by-80 matrix. We use [YOLO](https://github.com/pjreddie/darknet) to extract objects and their bounding boxes. Based on the bounding boxes, we can derive the area of each object relative to the frame size. If there are multiple objects of a particular class, we simply take the largest bounding boxes. These area information are then multiplied with the highest detection confidence to populate the 1-by-80 matrix. This maximizing process is used instead of accumulation so that a single object, occupying large portion of the screen, generates higher importance compared to many, smaller objects.
+
+**Average HSL values** are used based on observation that human are more attracted towards a certain hue (e.g. natural skin color, wooden, warm-lit environment). Luminance within a certain range, as well as saturation, may also play important role. This is a 1-by-3 matrix that the network needs to figure out the weight based on the provided ground truth.
+
+The equation can then be simplified as **X** * **W** = **Y**, where
+
+- **X** is a [1-by-107] feature matrices
+
+- **W** is a [107-by-4] weights and biases that the network need to figure out
+
+- **Y** is a [1-by-4] importance rank, provided as labeled ground truth during training and generated during testing
+
+We ran the training for 100,000 epochs, resulting 96% accuracy in trainset and 64% in testset at 10% train-test-split. This is a clear indication of overfitting. This may have been caused by insufficient training data as we only have 25 minutes of training video, which is then split 10% for testing.
+
 ### References
