@@ -13,6 +13,8 @@ var dynaloader = function() {
 	var frame_map;
 	var frame_map_loaded;
 	var frame_map_ready;
+	var tapestry_loaded;
+	var tapestry_ready;
 	var global_mouseover_x;
 	var last_mouseover_x;
 	var last_mouseover_y;
@@ -21,6 +23,7 @@ var dynaloader = function() {
 	var dict_width;
 	var video_name;
 	var frame_map_loader_message;
+	var tapestry_loader_message;
 	var idx_top;
 	var idx_bottom;
 
@@ -33,6 +36,7 @@ var dynaloader = function() {
 		zoom_level_text = $('#zoom-level');
 		zoom_container = $('#zoom-container');
 		frame_map_loader_message = $('#frame-map-loader-message');
+		tapestry_loader_message = $('#tapestry-loader-message');
 	}
 
 	var attach_zoom = function(val) {
@@ -66,9 +70,17 @@ var dynaloader = function() {
 
 	var set_frame_loader_message = function(val) {
 		if (!val) {
-			frame_map_loader_message.text('').hide()
+			frame_map_loader_message.text('').hide(400);
 		} else {
 			frame_map_loader_message.text('Loading Frame Map data...').show();
+		}
+	}
+
+	var show_tapestry_loader_message = function(val) {
+		if (val) {
+			tapestry_loader_message.text('Downloading tapestry images...').show();
+		} else {
+			tapestry_loader_message.text('').hide(400);
 		}
 	}
 
@@ -91,9 +103,9 @@ var dynaloader = function() {
 		setup_seek();
 		pane.empty().show();
 		spawn_images();
-		setTimeout(function() {
-			populate_dict_width();
-		}, 250);
+		// setTimeout(function() {
+			
+		// }, 250);
 		
 		zoom_container.show();
 		$('[data-tapestry=0]').show();
@@ -149,31 +161,34 @@ var dynaloader = function() {
 		frame_map_ready = false;
 
 		var parse_raw_csv = function(z, level_index) {
-			var data = new Array();
-			var rows = z.split('\n');
+			return new Promise(function(resolve, reject) {
+				var data = new Array();
+				var rows = z.split('\n');
 
-			$.each(rows, function(row_index, row_data) {
-				var row = new Array();
-				$.each(row_data.split(','), function(col_index, _data) {
-					var data = parseInt(_data);
-					if (row_index == 0) {
-						if (idx_top[level_index][data] == undefined) {
-							idx_top[level_index][data] = col_index;
+				$.each(rows, function(row_index, row_data) {
+					var row = new Array();
+					$.each(row_data.split(','), function(col_index, _data) {
+						var data = parseInt(_data);
+						if (row_index == 0) {
+							if (idx_top[level_index][data] == undefined) {
+								idx_top[level_index][data] = col_index;
+							}
 						}
-					}
 
-					if (row_index == rows.length - 2) {
-						if (idx_bottom[level_index][data] == undefined) {
-							idx_bottom[level_index][data] = col_index;
+						if (row_index == rows.length - 2) {
+							if (idx_bottom[level_index][data] == undefined) {
+								idx_bottom[level_index][data] = col_index;
+							}
 						}
-					}
 
-					row.push(data);
-				})
-				data.push(row);
-			});
+						row.push(data);
+					})
+					data.push(row);
+				});
 
-			return data;
+				resolve(data);
+			})
+			
 		}
 
 		set_frame_loader_message(true);
@@ -192,23 +207,23 @@ var dynaloader = function() {
 						var match = frame_map_regex.exec(filename);
 						var level_index = parseInt(match[1]);
 						zip.file(filename).async('text').then(function(content) {
-							//var a = content;
-							
-							frame_map[level_index] = parse_raw_csv(content, level_index);
-							frame_map_loaded++;
+							parse_raw_csv(content, level_index).then(function(data) {
+								frame_map[level_index] = data;
+								frame_map_loaded++;
 
-							if (frame_map_loaded == 4) {
-								resolve(true);
-							}
+								if (frame_map_loaded == 4) {
+									resolve(true);
+								}
+							})
 						})
 					})
 				})
 			})
 		}).then(function(data) {
 			frame_map_ready = true;
-			console.log(frame_map);
-			console.log(idx_top);
-			console.log(idx_bottom);
+			//console.log(frame_map);
+			//console.log(idx_top);
+			//console.log(idx_bottom);
 			set_frame_loader_message(false);
 		});
 		// 	return JSZip.loadAsync(data);
@@ -382,10 +397,11 @@ var dynaloader = function() {
 
 			//console.log(previous_figure);
 			//console.log(global_mouseover_x);
-			console.log(parent_offset);
-			console.log(prev_pixel + ' -> ' + next_pixel + ' | lock_x = ' + lock_x);
-			console.log(diff);
+			//console.log(parent_offset);
+			//console.log(prev_pixel + ' -> ' + next_pixel + ' | lock_x = ' + lock_x);
+			//console.log(diff);
 
+			console.log(fixed_tapestry_height);
 			$('img[data-tapestry=' + before + ']').velocity({
 				width: dict_width[after],
 				height: fixed_tapestry_height,
@@ -439,6 +455,9 @@ var dynaloader = function() {
 
 	var spawn_images = function() {
 		var v = video_name;
+		tapestry_loaded = 0;
+		tapestry_ready = false;
+		show_tapestry_loader_message(true);
 		// var pad = function(_x) {
 		// 	var x = _x + 1;
 		// 	var length = 8 - String(x).length;
@@ -452,6 +471,16 @@ var dynaloader = function() {
 								+     ' style="display:none"'
 								+ ' />')
 		}
+		$('img[data-tapestry]').on('load', function() {
+			tapestry_loaded++;
+			console.log('tapestry loaded = ' + tapestry_loaded);
+
+			if (tapestry_loaded == 4) {
+				tapestry_ready = true;
+				show_tapestry_loader_message(false);
+				populate_dict_width();
+			}
+		})
 
 		attach_mousemove();
 	}
@@ -465,7 +494,7 @@ var dynaloader = function() {
 			//console.log('X=' + loc_x + 'Y=' + loc_y);
 
 		}).on('click', function() {
-			if (frame_map_ready) {
+			if (frame_map_ready && tapestry_ready) {
 				//console.log(zoom_position);
 				//console.log(last_mouseover_y);
 				var frame_index = frame_map[zoom_position][last_mouseover_y][last_mouseover_x];

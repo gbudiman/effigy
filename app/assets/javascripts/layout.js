@@ -21,12 +21,9 @@ var layout = function() {
 
 		video_selector.on('changed.bs.select', function() {
 			setTimeout(function() {
-				console.log('change called');
 				var video_title = video_selector.selectpicker('val');
 				var video_file = video_selector.find('option:selected').attr('file');
 				var vanilla_video = video_player[0];
-
-				console.log(video_title);
 
 				video_player.empty().append('<source src="/videos/' + video_file + '">');
 				vanilla_video.load();
