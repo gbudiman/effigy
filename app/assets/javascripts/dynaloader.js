@@ -378,7 +378,7 @@ var dynaloader = function() {
 
 			var post_width = $('img[data-tapestry=' + after + ']').css('width');
 
-			pane.css('background-image', 'url("/assets/' + video_name + '/tapestry/combined_image_new_' + after + '.jpg")');
+			
 			var lock_x = last_mouseover_x;
 			var lock_y = last_mouseover_y;
 			var previous_figure = get_frame_at_cursor_position(before, lock_x, lock_y);
@@ -395,13 +395,15 @@ var dynaloader = function() {
 			var diff = next_pixel - parent_offset + frame_offset;
 
 
+			pane.css('background-image', 'url("/assets/' + video_name + '/tapestry/combined_image_new_' + after + '.jpg")');
+			pane.css('background-position', (diff) + 'px 0px');
 			//console.log(previous_figure);
 			//console.log(global_mouseover_x);
 			//console.log(parent_offset);
 			//console.log(prev_pixel + ' -> ' + next_pixel + ' | lock_x = ' + lock_x);
 			//console.log(diff);
 
-			console.log(fixed_tapestry_height);
+			// console.log(fixed_tapestry_height);
 			$('img[data-tapestry=' + before + ']').velocity({
 				width: dict_width[after],
 				height: fixed_tapestry_height,
@@ -415,7 +417,12 @@ var dynaloader = function() {
 					.css('opacity', 1)
 					.show();
 
+				last_mouseover_x *= scale;
+
 				pane.css('background-image', '');
+				pane.css('background-position', '');
+				//console.log('index = ' + after);
+				//$('img[data-tapestry=' + after + ']').trigger('mousemove');
 
 				bounce_enabled = true;
 				if (!isNaN(diff)) {
@@ -500,6 +507,7 @@ var dynaloader = function() {
 				var frame_index = frame_map[zoom_position][last_mouseover_y][last_mouseover_x];
 				var timestamp = parseFloat(frame_index) / 20;
 				video_player.currentTime = timestamp;
+				video_player.play();
 				console.log('Z = ' + zoom_position + ' | XY = (' + last_mouseover_x + ', ' + last_mouseover_y + ') => ' + frame_index);
 			}
 		})
